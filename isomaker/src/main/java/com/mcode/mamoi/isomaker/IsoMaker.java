@@ -3,8 +3,7 @@ package com.mcode.mamoi.isomaker;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
-import org.omg.CORBA_2_3.portable.OutputStream;
+import java.io.OutputStream;
 
 public class IsoMaker {
 	// Volume Descriptor type
@@ -56,10 +55,10 @@ public class IsoMaker {
 		
 		
 		fos.close();
-		System.out.println("Output: " + f.getAbsoluteFile());
+		System.out.println("Osutput: " + f.getAbsoluteFile());
 	}
 	
-	private static void writeZeros(FileOutputStream fos, int zeroCount) throws IOException {
+	private static void writeZeros(OutputStream fos, int zeroCount) throws IOException {
 		for(int i = 0; i < zeroCount; i++) {
 			fos.write(0x0);
 		}
