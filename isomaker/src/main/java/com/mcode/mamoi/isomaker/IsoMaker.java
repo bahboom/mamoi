@@ -13,10 +13,8 @@ public class IsoMaker {
 	public static final byte VOLUME_PARTITION_DESCRIPTOR = 3;
 	public static final byte VOLUME_DESCRIPTOR_SET_TERMINATOR = (byte) 255;
 	
-	public static final byte[] IDENTIFIER = new byte[]{'C', 'D', '0', '0', '1'};
-	public static final byte[] BOOT_SYSTEM_IDENTIFIER = new byte[] {'E', 'L', ' ', 'T', 'O', 'R','I', 'T', 'O', ' ', 
-		                                                             'S', 'P', 'E', 'C', 'I', 'F', 'I', 'C', 'A', 'T', 'I', 'O', 'N',
-		                                                             0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+	public static final String IDENTIFIER = "CD001";
+	public static final String BOOT_SYSTEM_IDENTIFIER = "EL TORITO SPECIFICATION";
 	public static final byte   VERSION = 0x1;
 	
 	//  Boot Catalog
@@ -44,16 +42,16 @@ public class IsoMaker {
 		// Sector 16
 		// Primary Volume Descriptor
 		fos.write(PRIMARY_VOLUME_DESCRIPTOR);
-		fos.write(IDENTIFIER);
+		fillText(fos, IDENTIFIER, 4);
 		fos.write(VERSION);
 		writeZeros(fos, 2041); // Data
 		
 		// Sector 17
 		// Boot Record
 		fos.write(BOOT_RECORD);
-		fos.write(IDENTIFIER);
+		fillText(fos, IDENTIFIER, 4);
 		fos.write(VERSION);
-		fos.write(BOOT_SYSTEM_IDENTIFIER);
+		fillText(fos, BOOT_SYSTEM_IDENTIFIER, 32);
 		writeZeros(fos, 32); // unused
 		writeZeros(fos, 19); // Booting Catalog sector address
 		writeZeros(fos, 1974); // unused
@@ -61,7 +59,7 @@ public class IsoMaker {
 		// Sector 18
 		// Set Terminator
 		fos.write(VOLUME_DESCRIPTOR_SET_TERMINATOR);
-		fos.write(IDENTIFIER);
+		fillText(fos, IDENTIFIER, 4);
 		fos.write(VERSION);
 		writeZeros(fos, 2041); // Data
 		
@@ -72,12 +70,17 @@ public class IsoMaker {
 		fos.write(PLATFORM_ID_80x86);
 		writeZeros(fos, 2); // reserved
 		fillText(fos, DEVELOPER, 24);
-		fos.write(0x0); // todo: checksum
+		fos.write(0x69); // check sum
+		fos.write(0x8d); // manually calculated
 		fos.write(0x55);
 		fos.write(0xAA);
+		// Initial/Default Entry
+		fos.write(BOOTABLE);
+		fos.write(0x0); // No Emulation
+		writeZeros(fos, 2); // Default load segment (7c0) 
 		
 		fos.close();
-		System.out.println("Osutput: " + f.getAbsoluteFile());
+		System.out.println("Output: " + f.getAbsoluteFile());
 	}
 	
 	private static void writeZeros(OutputStream os, int zeroCount) throws IOException {
