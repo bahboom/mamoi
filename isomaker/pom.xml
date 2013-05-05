@@ -5,7 +5,7 @@
 	<groupId>com.mcode.mamoi</groupId>
 	<artifactId>isomaker</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>jar</packaging>
+	<packaging>pom</packaging>
 
 	<name>isomaker</name>
 	<url>http://maven.apache.org</url>
@@ -27,5 +27,19 @@
 			<version>3.8.1</version>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>com.mcode.mamoi</groupId>
+			<artifactId>binaryio</artifactId>
+	
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+			
+
 	</dependencies>
+
+
+	<modules>
+		<module>binaryio</module>
+	</modules>
 </project>

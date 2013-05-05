@@ -3,7 +3,8 @@ package com.mcode.mamoi.isomaker;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import static com.mcode.mamoi.binaryio.BinaryWriter.writeZeros;
+import static com.mcode.mamoi.binaryio.BinaryWriter.fillText;
 
 public class IsoMaker {
 	// Volume Descriptor type
@@ -83,21 +84,6 @@ public class IsoMaker {
 		System.out.println("Output: " + f.getAbsoluteFile());
 	}
 	
-	private static void writeZeros(OutputStream os, int zeroCount) throws IOException {
-		for(int i = 0; i < zeroCount; i++) {
-			os.write(0x0);
-		}
-	}
-	
-	private static void fillText(OutputStream os, String text, int totalBytes) throws IOException {
-		for(int i = 0; i < text.length(); i++) {
-			os.write(text.charAt(i));
-		}
-		
-		for(int i = 0; i < totalBytes - text.length(); i++) {
-			os.write(0x0);
-		}
-		
-	}
+
 
 }
