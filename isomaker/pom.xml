@@ -31,15 +31,13 @@
 		<dependency>
 			<groupId>com.mcode.mamoi</groupId>
 			<artifactId>binaryio</artifactId>
-	
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 			
-
 	</dependencies>
 
 
 	<modules>
-		<module>binaryio</module>
+		<module>../binaryio</module>
 	</modules>
 </project>

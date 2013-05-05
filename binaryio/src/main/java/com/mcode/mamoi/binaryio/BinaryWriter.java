@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 
-public class BinaryWriter {
+public class BinaryWriter 
+{
 	public static void writeZeros(OutputStream os, int zeroCount) throws IOException {
 		for(int i = 0; i < zeroCount; i++) {
 			os.write(0x0);
