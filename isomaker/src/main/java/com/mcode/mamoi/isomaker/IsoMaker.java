@@ -1,10 +1,15 @@
 package com.mcode.mamoi.isomaker;
 
+import static com.mcode.mamoi.binaryio.BinaryWriter.fillText;
+import static com.mcode.mamoi.binaryio.BinaryWriter.writeZeros;
+import static com.mcode.mamoi.binaryio.BinaryWriter.copyBytes;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import static com.mcode.mamoi.binaryio.BinaryWriter.writeZeros;
-import static com.mcode.mamoi.binaryio.BinaryWriter.fillText;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class IsoMaker {
 	// Volume Descriptor type
@@ -34,7 +39,8 @@ public class IsoMaker {
 	 */
 	public static void main(String[] args) throws IOException {
 		File f = new File("image.iso");
-		FileOutputStream fos = new FileOutputStream(new File("image.iso"));
+		OutputStream fos = new FileOutputStream(new File("image.iso"));
+		InputStream fis = new FileInputStream(new File("boot.bin"));
 		
 		// Sector 0
 		// ISO format begins with 32768 bytes of 0x0.
@@ -79,7 +85,20 @@ public class IsoMaker {
 		fos.write(BOOTABLE);
 		fos.write(0x0); // No Emulation
 		writeZeros(fos, 2); // Default load segment (7c0) 
+		fos.write(0x0); // System Type. This must be a copy of byte 5 (System Type) from the Partition Table found in the boot image. 
+		fos.write(0x0); // Unused.
+		fos.write(0x1); // Number of virtual/emulated sectors (512 bytes) the system will store at Load Segment during initial boot procedure.
+		fos.write(0x0); // 2 byte word.
+		fos.write(20); // Start address of virtual disk (boot bin)
+		writeZeros(fos, 3); // 4 byte word.
+		writeZeros(fos, 1988); // Fill sector
 		
+		
+		// Sector 20
+		// Boot bin
+		copyBytes(fos, fis);
+		
+		fos.close();
 		fos.close();
 		System.out.println("Output: " + f.getAbsoluteFile());
 	}
