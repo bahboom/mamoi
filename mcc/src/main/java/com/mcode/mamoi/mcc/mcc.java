@@ -25,6 +25,9 @@ public class mcc {
 				String[] elements = line.split( " " );
 				for(int i = 0; i < elements.length; i++) {
 					String element = elements[i];
+					if(element.trim().isEmpty()) {
+						continue;
+					}
 					// Check for modes
 					if(element.equals("padzeros")) {
 						padzeros = true;
