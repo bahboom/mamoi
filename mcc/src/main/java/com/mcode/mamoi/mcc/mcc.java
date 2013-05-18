@@ -35,10 +35,10 @@ public class mcc {
 					} else if ( element.equals("hex") ) {
 						radix = 16;
 						continue;
-					} else if ( element.equals("decimal")) {
+					} else if ( element.equals("dec")) {
 						radix = 10;
 						continue;
-					} else if ( element.equals("binary")) {
+					} else if ( element.equals("bin")) {
 						radix = 2;
 						continue;
 					}
