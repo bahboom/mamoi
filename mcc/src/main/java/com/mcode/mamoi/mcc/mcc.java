@@ -29,16 +29,16 @@ public class mcc {
 						continue;
 					}
 					// Check for modes
-					if(element.equals("padzeros")) {
+					if(element.equalsIgnoreCase("pz")) {
 						padzeros = true;
 						continue;
-					} else if ( element.equals("hex") ) {
+					} else if ( element.equalsIgnoreCase("hex") ) {
 						radix = 16;
 						continue;
-					} else if ( element.equals("dec")) {
+					} else if ( element.equalsIgnoreCase("dec")) {
 						radix = 10;
 						continue;
-					} else if ( element.equals("bin")) {
+					} else if ( element.equalsIgnoreCase("bin")) {
 						radix = 2;
 						continue;
 					}
