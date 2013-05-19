@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 public class mcc {
-	private int lastRadix = 10;
-	private int radix = 10;
+	private Stack<Integer> radix = new Stack<Integer>();
 	private boolean padding = false;
 	
 	private boolean defining = false;
@@ -21,7 +21,7 @@ public class mcc {
 	private Map<String, List<String>> userdefinedCommands = new HashMap<String, List<String>>(); 
 	
 	public mcc() {
-		
+		radix.push(10);
 	}
 	
 	public void addElement(String e) throws Exception {
@@ -83,8 +83,16 @@ public class mcc {
 		return false;
 	}
 	
+	private void debug() {
+		for(String element : elements) {
+			System.out.print("[" + element + "]");
+		}
+		System.out.println();
+	}
+	
 	public int compile(String binaryFile) throws Exception {
 		expandDefinitions();
+		debug();
 		int bytesWritten = 0;
 		OutputStream fos = new FileOutputStream(binaryFile);
 		
@@ -94,21 +102,16 @@ public class mcc {
 				padding = true;
 				continue;
 			} else if("hex".equals(element)) {
-				lastRadix = radix;
-				radix = 16;
+				radix.push(16);
 				continue;
 			} else if("bin".equals(element)) {
-				lastRadix = radix;
-				radix = 2;
+				radix.push(2);
 				continue;
 			} else if("dec".equals(element)) {
-				lastRadix = radix;
-				radix = 10;
+				radix.push(10);
 				continue;
 			} else if("lr".equals(element)) {
-				int tmp = radix;
-				radix = lastRadix;
-				lastRadix = tmp;
+				radix.pop();
 				continue;
 			}
 			
@@ -121,7 +124,7 @@ public class mcc {
 				continue;
 			}
 			
-			fos.write(Integer.parseInt(element, radix));
+			fos.write(Integer.parseInt(element, radix.peek()));
 			bytesWritten++;
 		}
 		fos.close();
