@@ -27,6 +27,8 @@ public class mcc {
 	public void addElement(String e) throws Exception {
 		e = e.toLowerCase();
 		
+		// Do not add def and edef to elements
+        // Create internal definition for defs instead
 		if(e.equals("def")) {
 			if(defining) {
 				throw new Exception("error: already defining");
@@ -83,6 +85,7 @@ public class mcc {
 		return false;
 	}
 	
+	// Display element contents to be written in byte code
 	private void debug() {
 		for(String element : elements) {
 			System.out.print("[" + element + "]");
@@ -110,6 +113,9 @@ public class mcc {
 			} else if("dec".equals(element)) {
 				radix.push(10);
 				continue;
+			} else if("str".equals(element)) {
+				radix.push(0); // 0 == str mode
+				continue;
 			} else if("lr".equals(element)) {
 				radix.pop();
 				continue;
@@ -123,9 +129,16 @@ public class mcc {
 				padding = false;
 				continue;
 			}
+			if(radix.peek() == 0) { // str mode
+				for(int i = 0; i < element.length(); i++) {
+					fos.write(element.charAt(i));
+					bytesWritten++;
+				}
+			} else {
+				fos.write(Integer.parseInt(element, radix.peek()));
+				bytesWritten++;
+			}
 			
-			fos.write(Integer.parseInt(element, radix.peek()));
-			bytesWritten++;
 		}
 		fos.close();
 		return bytesWritten;
