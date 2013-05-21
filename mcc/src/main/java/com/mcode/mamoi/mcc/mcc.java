@@ -125,18 +125,18 @@ public class mcc {
 		RandomAccessFile fos = new RandomAccessFile(new File(binaryFile), "rw");
 		
 		for(String element : elements) {
-			if(element.startsWith("loc8:")) {
+			if(element.startsWith("loc8:") || element.startsWith("rel8:")) {
 				addAddressRef(element, bytesWritten);
 				fos.write(0);
 				bytesWritten++;
 				continue;
-			} else if(element.startsWith("loc16:")) {
+			} else if(element.startsWith("loc16:") || element.startsWith("rel16:")) {
 				addAddressRef(element, bytesWritten);
 				fos.write(0);
 				fos.write(0);
 				bytesWritten+=2;
 				continue;
-			} else if(element.startsWith("loc32:")) {
+			} else if(element.startsWith("loc32:") || element.startsWith("rel32:")) {
 				addAddressRef(element, bytesWritten);
 				fos.write(0);
 				fos.write(0);
@@ -144,7 +144,7 @@ public class mcc {
 				fos.write(0);
 				bytesWritten+=4;
 				continue;
-			} else if(element.startsWith("loc64:")) {
+			} else if(element.startsWith("loc64:") || element.startsWith("rel64:")) {
 				addAddressRef(element, bytesWritten);
 				fos.write(0);
 				fos.write(0);
@@ -210,7 +210,21 @@ public class mcc {
 			for(long offset : offsets) {
 				long address = addressLocations.get(label);
 				fos.seek(offset);
-				fos.write(addressToBytes(address, length));
+				
+				
+				if(ref.startsWith("loc")) {
+					fos.write(addressToBytes(address, length));
+				} else {
+					// need to fix this stupid logic
+					/// dont know what will happen when trying to use rel8+
+					//only do 8 bits for now
+					int l = (int)(address - offset) - 1;
+					if( l < 0 )
+						l += 256;
+					
+					fos.write(l);
+				}
+				//fos.write(addressToBytes(address, length));
 			}
 		}
 		
@@ -230,13 +244,13 @@ public class mcc {
 		return b;
 	}
 	private int addressRefLength(String ref) throws Exception {
-		if(ref.startsWith("loc8:")) {
+		if(ref.startsWith("loc8:") || ref.startsWith("rel8:")) {
 			return 1;
-		} else if(ref.startsWith("loc16:")) {
+		} else if(ref.startsWith("loc16:") || ref.startsWith("rel16:")) {
 			return 2;
-		} else if(ref.startsWith("loc32:")) {
+		} else if(ref.startsWith("loc32:") || ref.startsWith("rel32:")) {
 			return 4;
-		} else if(ref.startsWith("loc64:")) {
+		} else if(ref.startsWith("loc64:") || ref.startsWith("rel64:")) {
 			return 8;
 		} else {
 			throw new Exception("Error: " + ref);
