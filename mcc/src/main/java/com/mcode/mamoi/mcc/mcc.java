@@ -1,10 +1,10 @@
 package com.mcode.mamoi.mcc;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +13,8 @@ import java.util.Stack;
 
 public class mcc {
 	private Stack<Integer> radix = new Stack<Integer>();
+	private Map<String, Long> addressLocations = new HashMap<String, Long>();
+	private Map<String, ArrayList<Long>> addressRefs = new HashMap<String, ArrayList<Long>>();
 	private boolean padding = false;
 	
 	private boolean defining = false;
@@ -25,7 +27,6 @@ public class mcc {
 	}
 	
 	public void addElement(String e) throws Exception {
-		e = e.toLowerCase();
 		
 		// Do not add def and edef to elements
         // Create internal definition for defs instead
@@ -42,7 +43,17 @@ public class mcc {
 			defining = false;
 			definitionName = null;
 			return;
-		} 
+		}/* else if (e.startsWith("loc8:")) {
+			return;
+		} else if (e.startsWith("loc16:")) {
+			return;
+		} else if (e.startsWith("loc32:")) {
+			return;
+		} else if (e.startsWith("loc64:")) {
+			return;
+		} else if (e.endsWith(":")) {
+		    return; 
+		} */
 		
 		if(defining) {
 			if(definitionName == null) {
@@ -93,14 +104,64 @@ public class mcc {
 		System.out.println();
 	}
 	
-	public int compile(String binaryFile) throws Exception {
+	private void addAddressRef(String ref, long offset) {
+		if(addressRefs.get(ref) == null) {
+			ArrayList<Long> offsets = new ArrayList<Long>();
+			offsets.add(offset);
+			addressRefs.put(ref, offsets);
+		} else {
+			addressRefs.get(ref).add(offset);
+		}
+	}
+	
+	private void saveAddressLocation(String label, long address) {
+		addressLocations.put(label, address);
+	}
+	
+	public long compile(String binaryFile) throws Exception {
 		expandDefinitions();
 		debug();
-		int bytesWritten = 0;
-		OutputStream fos = new FileOutputStream(binaryFile);
-		
+		long bytesWritten = 0;
+		RandomAccessFile fos = new RandomAccessFile(new File(binaryFile), "rw");
 		
 		for(String element : elements) {
+			if(element.startsWith("loc8:")) {
+				addAddressRef(element, bytesWritten);
+				fos.write(0);
+				bytesWritten++;
+				continue;
+			} else if(element.startsWith("loc16:")) {
+				addAddressRef(element, bytesWritten);
+				fos.write(0);
+				fos.write(0);
+				bytesWritten+=2;
+				continue;
+			} else if(element.startsWith("loc32:")) {
+				addAddressRef(element, bytesWritten);
+				fos.write(0);
+				fos.write(0);
+				fos.write(0);
+				fos.write(0);
+				bytesWritten+=4;
+				continue;
+			} else if(element.startsWith("loc64:")) {
+				addAddressRef(element, bytesWritten);
+				fos.write(0);
+				fos.write(0);
+				fos.write(0);
+				fos.write(0);
+				fos.write(0);
+				fos.write(0);
+				fos.write(0);
+				fos.write(0);
+				bytesWritten+=8;
+				
+				continue;
+			} else if(element.endsWith(":")) {
+				saveAddressLocation(element, bytesWritten);
+				continue;
+			}
+			
 			if("pz".equals(element)) {
 				padding = true;
 				continue;
@@ -122,7 +183,7 @@ public class mcc {
 			}
 			
 			if(padding) {
-				while(bytesWritten < Integer.parseInt(element)) {
+				while(bytesWritten < Integer.parseInt(element, radix.peek())) {
 					fos.write(0);
 					bytesWritten++;
 				}
@@ -140,8 +201,46 @@ public class mcc {
 			}
 			
 		}
+		
+		// Fill in address locations
+		for(String ref : addressRefs.keySet()) {
+			int length = addressRefLength(ref);
+			String label = ref.substring(ref.indexOf(":") + 1, ref.length()) + ":";
+			ArrayList<Long> offsets = addressRefs.get(ref);
+			for(long offset : offsets) {
+				long address = addressLocations.get(label);
+				fos.seek(offset);
+				fos.write(addressToBytes(address, length));
+			}
+		}
+		
+	
 		fos.close();
 		return bytesWritten;
+		
+	}
+	private byte[] addressToBytes(long address, int numBytes) {
+		byte[] b = new byte[numBytes];
+		
+		for(int i = 1; i <= numBytes; i++) {
+		    b[i-1] = (byte)(address % Math.pow(256, i));
+		    address -= b[i-1];
+		}
+		
+		return b;
+	}
+	private int addressRefLength(String ref) throws Exception {
+		if(ref.startsWith("loc8:")) {
+			return 1;
+		} else if(ref.startsWith("loc16:")) {
+			return 2;
+		} else if(ref.startsWith("loc32:")) {
+			return 4;
+		} else if(ref.startsWith("loc64:")) {
+			return 8;
+		} else {
+			throw new Exception("Error: " + ref);
+		}
 	}
 	
     public static void main( String[] args ) throws Exception {
