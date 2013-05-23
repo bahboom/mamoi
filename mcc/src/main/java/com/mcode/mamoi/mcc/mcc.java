@@ -122,8 +122,11 @@ public class mcc {
 		expandDefinitions();
 		debug();
 		long bytesWritten = 0;
-		RandomAccessFile fos = new RandomAccessFile(new File(binaryFile), "rw");
-		
+		File f = new File(binaryFile);
+		if(f.exists()) {
+			f.delete();
+		}
+		RandomAccessFile fos = new RandomAccessFile(f, "rw");
 		for(String element : elements) {
 			if(element.startsWith("loc8:") || element.startsWith("rel8:")) {
 				addAddressRef(element, bytesWritten);
@@ -219,15 +222,17 @@ public class mcc {
 				if(ref.startsWith("loc")) {
 					fos.write(addressToBytes(address, length));
 				} else { // rel
-					fos.write(addressToBytes(address - offset, length));
+					if(address > offset) {
+						fos.write(addressToBytes((address - offset)-length, length));
+					} else {
+						fos.write(addressToBytes((address - offset) - 1, length));
+					}
 				}
 			}
 		}
 		
-	
 		fos.close();
 		return bytesWritten;
-		
 	}
 	private byte[] addressToBytes(long address, int numBytes) {
 		boolean isNeg = false;
