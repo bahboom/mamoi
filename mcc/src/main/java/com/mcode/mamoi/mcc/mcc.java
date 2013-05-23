@@ -208,23 +208,19 @@ public class mcc {
 			String label = ref.substring(ref.indexOf(":") + 1, ref.length()) + ":";
 			ArrayList<Long> offsets = addressRefs.get(ref);
 			for(long offset : offsets) {
+				if(!addressLocations.containsKey(label)) {
+					fos.close();
+					throw new Exception("Error: label + " + label + " not found!");
+				}
 				long address = addressLocations.get(label);
 				fos.seek(offset);
 				
 				
 				if(ref.startsWith("loc")) {
 					fos.write(addressToBytes(address, length));
-				} else {
-					// need to fix this stupid logic
-					/// dont know what will happen when trying to use rel8+
-					//only do 8 bits for now
-					int l = (int)(address - offset) - 1;
-					if( l < 0 )
-						l += 256;
-					
-					fos.write(l);
+				} else { // rel
+					fos.write(addressToBytes(address - offset, length));
 				}
-				//fos.write(addressToBytes(address, length));
 			}
 		}
 		
@@ -234,11 +230,19 @@ public class mcc {
 		
 	}
 	private byte[] addressToBytes(long address, int numBytes) {
+		boolean isNeg = false;
+		if(address < 0) {
+			isNeg = true;
+		}
 		byte[] b = new byte[numBytes];
 		
 		for(int i = 1; i <= numBytes; i++) {
-		    b[i-1] = (byte)(address % Math.pow(256, i));
-		    address -= b[i-1];
+			byte v = (byte)(address % 256);
+			if(isNeg) {
+				v += 255;
+			}
+		    b[i-1] = v;
+		    address /= 256;
 		}
 		
 		return b;
