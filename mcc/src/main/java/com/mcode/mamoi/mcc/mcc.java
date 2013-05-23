@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+// mcc = machine code compilers
 public class mcc {
 	private Stack<Integer> radix = new Stack<Integer>();
 	private Map<String, Long> addressLocations = new HashMap<String, Long>();
@@ -43,17 +44,7 @@ public class mcc {
 			defining = false;
 			definitionName = null;
 			return;
-		}/* else if (e.startsWith("loc8:")) {
-			return;
-		} else if (e.startsWith("loc16:")) {
-			return;
-		} else if (e.startsWith("loc32:")) {
-			return;
-		} else if (e.startsWith("loc64:")) {
-			return;
-		} else if (e.endsWith(":")) {
-		    return; 
-		} */
+		}
 		
 		if(defining) {
 			if(definitionName == null) {
@@ -72,7 +63,7 @@ public class mcc {
 	}
 	
 	private void expandDefinitions() {
-		
+		// Expand all user defined definitions
 		while(containsUserDefinition()) {
 			List<String> expandedElements = new ArrayList<String>();
 			for(String element : elements) {
@@ -104,6 +95,7 @@ public class mcc {
 		System.out.println();
 	}
 	
+	// save rel8*:location and loc8*:location calls 
 	private void addAddressRef(String ref, long offset) {
 		if(addressRefs.get(ref) == null) {
 			ArrayList<Long> offsets = new ArrayList<Long>();
@@ -114,6 +106,7 @@ public class mcc {
 		}
 	}
 	
+	// save addressPosition: 
 	private void saveAddressLocation(String label, long address) {
 		addressLocations.put(label, address);
 	}
@@ -234,6 +227,8 @@ public class mcc {
 		fos.close();
 		return bytesWritten;
 	}
+	
+	// return address in a little endian address bytes
 	private byte[] addressToBytes(long address, int numBytes) {
 		boolean isNeg = false;
 		if(address < 0) {
@@ -252,6 +247,7 @@ public class mcc {
 		
 		return b;
 	}
+	
 	private int addressRefLength(String ref) throws Exception {
 		if(ref.startsWith("loc8:") || ref.startsWith("rel8:")) {
 			return 1;
@@ -262,7 +258,7 @@ public class mcc {
 		} else if(ref.startsWith("loc64:") || ref.startsWith("rel64:")) {
 			return 8;
 		} else {
-			throw new Exception("Error: " + ref);
+			throw new Exception("Internal Error: " + ref + " is not a legal address reference!");
 		}
 	}
 	
