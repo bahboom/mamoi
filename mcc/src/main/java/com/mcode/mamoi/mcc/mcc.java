@@ -218,7 +218,7 @@ public class mcc {
 					if(address > offset) {
 						fos.write(addressToBytes((address - offset)-length, length));
 					} else {
-						fos.write(addressToBytes((address - offset) - 1, length));
+						fos.write(addressToBytes((address - offset), length));
 					}
 				}
 			}
