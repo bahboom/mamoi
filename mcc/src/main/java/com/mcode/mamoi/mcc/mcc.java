@@ -1,30 +1,34 @@
 package com.mcode.mamoi.mcc;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
+
+import com.mcode.mamoi.mcc.code.CodeSegment;
+import com.mcode.mamoi.mcc.interpreter.CodeInterpreter;
+import com.mcode.mamoi.mcc.interpreter.ModeManager;
+import com.mcode.mamoi.mcc.interpreter.UserDefinedCommandManager;
 
 // mcc = machine code compilers
 public class mcc {
-	private Stack<Integer> radix = new Stack<Integer>();
+	private CodeInterpreter ci = null;
+	private ModeManager mm = new ModeManager();
+	private UserDefinedCommandManager udcm = new UserDefinedCommandManager();
+	
 	private Map<String, Long> addressLocations = new HashMap<String, Long>();
 	private Map<String, ArrayList<Long>> addressRefs = new HashMap<String, ArrayList<Long>>();
 	private boolean padding = false;
 	
-	private boolean defining = false;
 	private String definitionName = null;
 	private List<String> elements = new ArrayList<String>();
 	private Map<String, List<String>> userdefinedCommands = new HashMap<String, List<String>>(); 
 	
 	public mcc() {
-		radix.push(10);
+		mm.pushRadix(10);
 	}
 	
 	public void addElement(String e) throws Exception {
@@ -32,21 +36,21 @@ public class mcc {
 		// Do not add def and edef to elements
         // Create internal definition for defs instead
 		if(e.equals("def")) {
-			if(defining) {
+			if(mm.isDefineMode()) {
 				throw new Exception("error: already defining");
 			}
-			defining = true;
+			mm.setDefineMode(true);
 			return;
 		} else if (e.equals("edef")) {
-			if(!defining) {
+			if(!mm.isDefineMode()) {
 				throw new Exception("error: not defining");
 			}
-			defining = false;
+			mm.setDefineMode(false);
 			definitionName = null;
 			return;
 		}
 		
-		if(defining) {
+		if(mm.isDefineMode()) {
 			if(definitionName == null) {
 				if(userdefinedCommands.containsKey(e)) {
 					throw new Exception("error: definition already exist");
@@ -162,37 +166,37 @@ public class mcc {
 				padding = true;
 				continue;
 			} else if("hex".equals(element)) {
-				radix.push(16);
+				mm.pushRadix(16);
 				continue;
 			} else if("bin".equals(element)) {
-				radix.push(2);
+				mm.pushRadix(2);
 				continue;
 			} else if("dec".equals(element)) {
-				radix.push(10);
+				mm.pushRadix(10);
 				continue;
 			} else if("str".equals(element)) {
-				radix.push(0); // 0 == str mode
+				mm.pushRadix(0); // 0 == str mode
 				continue;
 			} else if("lr".equals(element)) {
-				radix.pop();
+				mm.popRadix();
 				continue;
 			}
 			
 			if(padding) {
-				while(bytesWritten < Integer.parseInt(element, radix.peek())) {
+				while(bytesWritten < Integer.parseInt(element, mm.peekRadix())) {
 					fos.write(0);
 					bytesWritten++;
 				}
 				padding = false;
 				continue;
 			}
-			if(radix.peek() == 0) { // str mode
+			if(mm.peekRadix() == 0) { // str mode
 				for(int i = 0; i < element.length(); i++) {
 					fos.write(element.charAt(i));
 					bytesWritten++;
 				}
 			} else {
-				fos.write(Integer.parseInt(element, radix.peek()));
+				fos.write(Integer.parseInt(element, mm.peekRadix()));
 				bytesWritten++;
 			}
 			
@@ -265,6 +269,25 @@ public class mcc {
     public static void main( String[] args ) throws Exception {
     	String sourceFile = args[0];
     	String binaryFile = args[1];
+    	
+    	ModeManager mm = new ModeManager();
+    	mm.pushRadix(16); // default radix to hex.
+    	UserDefinedCommandManager udcm = new UserDefinedCommandManager();
+    	CodeInterpreter ci = new CodeInterpreter(mm, udcm);
+    	CodeSegment cs = ci.translate(new File(sourceFile));
+    	
+    	FileOutputStream fos = new FileOutputStream(new File(binaryFile));
+    	for(int b : cs.getBytes()) {
+    		fos.write(b);
+    		System.out.print("[" + b + "]");
+    	}
+    	fos.close();
+    		
+    	/*
+    	String sourceFile = args[0];
+    	String binaryFile = args[1];
+    	
+    	
     	mcc compiler = new mcc();
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(sourceFile)));
 		
@@ -284,5 +307,7 @@ public class mcc {
 		}
 		br.close();
     	System.out.println("Bytes written: " + compiler.compile(binaryFile));
+    	*/
+    	
     }
 }
