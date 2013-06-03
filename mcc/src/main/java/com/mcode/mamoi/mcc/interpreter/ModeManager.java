@@ -8,6 +8,7 @@ public class ModeManager {
 	private boolean defineMode = false;
 	private boolean quoteMode = false;
 	private boolean includeMode = false;
+	private boolean padZeroMode = false;
 	
 	public ModeManager() {
 		radixStack = new Stack<Integer>();
@@ -21,7 +22,12 @@ public class ModeManager {
 	public int peekRadix() {
 		return radixStack.peek();
 	}
-	
+	public boolean isPadZeroMode() {
+		return padZeroMode;
+	}
+	public void setPadZeroMode(boolean padding) {
+		padZeroMode = padding;
+	}
 	public boolean isDefineMode() {
 		return defineMode;
 	}

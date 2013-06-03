@@ -11,17 +11,23 @@ import java.util.Set;
 
 import com.mcode.mamoi.mcc.code.CodeSegment;
 import com.mcode.mamoi.mcc.code.DataCodeElement;
+import com.mcode.mamoi.mcc.code.PadZeroCodeElement;
 import com.mcode.mamoi.mcc.exception.MCCException;
-import com.mcode.mamoi.mcc.exception.UserDefinedCommandException;
+import com.mcode.mamoi.mcc.exception.MCCException;
 
 public class CodeInterpreter {
 	private Set<String> mccKeywords = null;
 	private ModeManager mm = null;
 	private UserDefinedCommandManager udcm = null;
+	private ReferenceManager rm = null;
+	private IncludedSourceManager ism = null;
 	
-	public CodeInterpreter(ModeManager mm, UserDefinedCommandManager udcm) {
+	
+	public CodeInterpreter(ModeManager mm, UserDefinedCommandManager udcm, ReferenceManager rm, IncludedSourceManager ism) {
 		this.mm = mm;
 		this.udcm = udcm;
+		this.rm = rm;
+		this.ism = ism;
 		mccKeywords = new HashSet<String>();
 		mccKeywords.add("pz");
 		mccKeywords.add("def");
@@ -40,6 +46,7 @@ public class CodeInterpreter {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(mccFile)));
 		
 		String line = br.readLine();
+		int lineNum = 1;
 		while ( line != null ) {
 			line = line.replaceAll(";.*", ""); // remove comments from code
 			if(!line.trim().isEmpty()) {
@@ -47,45 +54,67 @@ public class CodeInterpreter {
 				for(int i = 0; i < elements.length; i++) {
 					String element = elements[i];
 					if(!element.trim().isEmpty()) {
-						interpret(cs, element);
+						interpret(cs, element, mccFile.getAbsolutePath(), lineNum);
 					}
 				}
 			}
 			line = br.readLine();
+			lineNum++;
 		}
 		br.close();
 		return cs;
 	}
 	
-	private void interpret(CodeSegment cs, String element) throws MCCException, IOException {
+	private void interpret(CodeSegment cs, String element, String sourceFile, int lineNum) throws MCCException, IOException {
 		if(mm.isDefineMode()) {
 			if(mm.getDefinitionName() == null) {
 				if(mccKeywords.contains(element)) {
-					throw new UserDefinedCommandException("ERROR: " + element + " is a keyword.  Cannot define command!");
+					throw new MCCException("ERROR: " + element + " is a keyword.  Cannot define command!", sourceFile, lineNum);
 				}
 				if(udcm.containsCommand(element)) {
-					throw new UserDefinedCommandException("ERROR: User defined definition already exist");
+					throw new MCCException("ERROR: User defined definition already exist", sourceFile, lineNum);
 				}
 				
 				mm.setDefinitionName(element);
-				udcm.createUserDefinedCode(element);
+				if(!udcm.createUserDefinedCode(element)) {
+					throw new MCCException(element + " is already defined!", sourceFile, lineNum);
+				}
 			} else {
 				if (element.equals("edef")) {
 					if(!mm.isDefineMode()) {
-						throw new MCCException("ERROR: Cannot 'edef' without 'def'");
+						throw new MCCException("Cannot 'edef' without 'def'", sourceFile, lineNum);
 					}
 					mm.setDefineMode(false);
 					mm.setDefinitionName(null);
 				} else {
-					udcm.addUserDefinedCode(mm.getDefinitionName(), element);
+					if(!udcm.addUserDefinedCode(mm.getDefinitionName(), element)) {
+						throw new MCCException(element + " command is not created yet!", sourceFile, lineNum);
+					}
 				}
-			}
+			}	
 			return;
 		} 
 		
 		if(mm.isIncludeMode()) {
 			mm.setIncludeMode(false);
-			cs.addCodeElement(translate(new File(element)));
+			File importFile = new File(element);
+			if(!ism.registerInclude(importFile.getAbsolutePath())) {
+				throw new MCCException("Circular include: " + element, sourceFile, lineNum);
+			}
+			cs.addCodeElement(translate(importFile));
+			return;
+		}
+		
+		if(mm.isPadZeroMode()) {
+			mm.setPadZeroMode(false);
+			int currentBytes = cs.getBytes().size();
+			int pzParam = Integer.parseInt(element, mm.peekRadix());
+			int zerosNeeded = pzParam - currentBytes;
+			if(zerosNeeded < 0) {
+				throw new MCCException("Cannot pad zero, byte pointer already passed! Current bytes: " + currentBytes + ", Pad location: " + pzParam, sourceFile, lineNum);
+			}
+			
+			cs.addCodeElement(new PadZeroCodeElement(zerosNeeded));
 			return;
 		}
 		
@@ -101,16 +130,22 @@ public class CodeInterpreter {
 			mm.pushRadix(2);
 		} else if (element.equals("lr")) {
 			mm.popRadix();
+		} else if (element.equals("pz")) {
+			mm.setPadZeroMode(true);
+		} else if (element.endsWith(":")) {
+			if(!rm.registerAddress(element, cs.getBytes().size())) {
+				throw new MCCException(element + " label already exist!", sourceFile, lineNum);
+			}
 		} else if (udcm.containsCommand(element)) {
 			List<String> codeList = udcm.getUserDefinedCode(element);
 			for(String code : codeList) {
-				interpret(cs, code);
+				interpret(cs, code, sourceFile, lineNum);
 			}
 		} else {
 			try {
 				cs.addCodeElement(new DataCodeElement(element, mm.peekRadix()));
 			} catch(NumberFormatException e) {
-				throw new MCCException("'" + element + "' is not a valid data value for radix " + mm.peekRadix());
+				throw new MCCException("'" + element + "' is not a valid data value for radix " + mm.peekRadix(), sourceFile, lineNum);
 			}
 		}
 	}

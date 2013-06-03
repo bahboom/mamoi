@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.mcode.mamoi.mcc.exception.UserDefinedCommandException;
+import com.mcode.mamoi.mcc.exception.MCCException;
 
 public class UserDefinedCommandManager {
 	private Map<String, List<String>> commands = null;
@@ -22,20 +22,28 @@ public class UserDefinedCommandManager {
 		return commands.get(command);
 	}
 	
-	public void createUserDefinedCode(String command) throws UserDefinedCommandException {
+	/**
+	 * Returns false if command already exist.
+	 */
+	public boolean createUserDefinedCode(String command) throws MCCException {
 		if(commands.containsKey(command)) {
-			throw new UserDefinedCommandException("ERROR: " + command + " is already defined!");
+			return false;
 		} else {
 			List<String> codeList = new ArrayList<String>();
 			commands.put(command, codeList);
+			return true;
 		}
 	}
 	
-	public void addUserDefinedCode(String command, String code) throws UserDefinedCommandException {
+	/**
+	 * Returns false if command is not yet defined.
+	 */
+	public boolean addUserDefinedCode(String command, String code) throws MCCException {
 		List<String> codeList = commands.get(command);
 		if(codeList == null) {
-			throw new UserDefinedCommandException("ERROR: " + command + " is not createdd yet!");
+			return false;
 		}
 		codeList.add(code);
+		return true;
 	}
 }

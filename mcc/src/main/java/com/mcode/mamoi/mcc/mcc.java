@@ -10,7 +10,9 @@ import java.util.Map;
 
 import com.mcode.mamoi.mcc.code.CodeSegment;
 import com.mcode.mamoi.mcc.interpreter.CodeInterpreter;
+import com.mcode.mamoi.mcc.interpreter.IncludedSourceManager;
 import com.mcode.mamoi.mcc.interpreter.ModeManager;
+import com.mcode.mamoi.mcc.interpreter.ReferenceManager;
 import com.mcode.mamoi.mcc.interpreter.UserDefinedCommandManager;
 
 // mcc = machine code compilers
@@ -18,6 +20,7 @@ public class mcc {
 	private CodeInterpreter ci = null;
 	private ModeManager mm = new ModeManager();
 	private UserDefinedCommandManager udcm = new UserDefinedCommandManager();
+	private ReferenceManager rm = new ReferenceManager();
 	
 	private Map<String, Long> addressLocations = new HashMap<String, Long>();
 	private Map<String, ArrayList<Long>> addressRefs = new HashMap<String, ArrayList<Long>>();
@@ -273,14 +276,22 @@ public class mcc {
     	ModeManager mm = new ModeManager();
     	mm.pushRadix(16); // default radix to hex.
     	UserDefinedCommandManager udcm = new UserDefinedCommandManager();
-    	CodeInterpreter ci = new CodeInterpreter(mm, udcm);
-    	CodeSegment cs = ci.translate(new File(sourceFile));
+    	ReferenceManager rm = new ReferenceManager();
+    	IncludedSourceManager ism = new IncludedSourceManager();
+    	CodeInterpreter ci = new CodeInterpreter(mm, udcm, rm, ism);
+    	File f = new File(sourceFile);
+    	ism.registerInclude(f.getAbsolutePath());
+    	
+    	CodeSegment cs = ci.translate(f);
     	
     	FileOutputStream fos = new FileOutputStream(new File(binaryFile));
+    	int bytesWritten = 0;
     	for(int b : cs.getBytes()) {
     		fos.write(b);
+    		bytesWritten++;
     		System.out.print("[" + b + "]");
     	}
+    	System.out.println("\nBytes Written: " + bytesWritten);
     	fos.close();
     		
     	/*
