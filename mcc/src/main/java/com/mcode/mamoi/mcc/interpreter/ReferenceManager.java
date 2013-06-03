@@ -16,4 +16,11 @@ public class ReferenceManager {
 			return true;
 		}
 	}
+	public int getAddress(String label) {
+		if(addresses.containsKey(label)) {
+			return addresses.get(label);
+		} else {
+			return -1;
+		}
+	}
 }

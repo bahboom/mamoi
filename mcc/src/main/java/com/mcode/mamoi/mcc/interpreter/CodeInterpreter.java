@@ -9,10 +9,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.mcode.mamoi.mcc.code.AddressCodeElement;
 import com.mcode.mamoi.mcc.code.CodeSegment;
 import com.mcode.mamoi.mcc.code.DataCodeElement;
 import com.mcode.mamoi.mcc.code.PadZeroCodeElement;
-import com.mcode.mamoi.mcc.exception.MCCException;
 import com.mcode.mamoi.mcc.exception.MCCException;
 
 public class CodeInterpreter {
@@ -40,7 +40,7 @@ public class CodeInterpreter {
 		
 	}
 	
-	public CodeSegment translate(File mccFile) throws MCCException, IOException {
+	public CodeSegment translate(File mccFile, int byteOffset) throws MCCException, IOException {
 		CodeSegment cs = new CodeSegment(this);
 		
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(mccFile)));
@@ -54,7 +54,7 @@ public class CodeInterpreter {
 				for(int i = 0; i < elements.length; i++) {
 					String element = elements[i];
 					if(!element.trim().isEmpty()) {
-						interpret(cs, element, mccFile.getAbsolutePath(), lineNum);
+						interpret(cs, element, byteOffset, mccFile.getAbsolutePath(), lineNum);
 					}
 				}
 			}
@@ -65,7 +65,7 @@ public class CodeInterpreter {
 		return cs;
 	}
 	
-	private void interpret(CodeSegment cs, String element, String sourceFile, int lineNum) throws MCCException, IOException {
+	private void interpret(CodeSegment cs, String element, int byteOffset, String sourceFile, int lineNum) throws MCCException, IOException {
 		if(mm.isDefineMode()) {
 			if(mm.getDefinitionName() == null) {
 				if(mccKeywords.contains(element)) {
@@ -101,13 +101,13 @@ public class CodeInterpreter {
 			if(!ism.registerInclude(importFile.getAbsolutePath())) {
 				throw new MCCException("Circular include: " + element, sourceFile, lineNum);
 			}
-			cs.addCodeElement(translate(importFile));
+			cs.addCodeElement(translate(importFile, cs.getBytes().size() + byteOffset));
 			return;
 		}
 		
 		if(mm.isPadZeroMode()) {
 			mm.setPadZeroMode(false);
-			int currentBytes = cs.getBytes().size();
+			int currentBytes = cs.getBytes().size() + byteOffset;
 			int pzParam = Integer.parseInt(element, mm.peekRadix());
 			int zerosNeeded = pzParam - currentBytes;
 			if(zerosNeeded < 0) {
@@ -128,22 +128,30 @@ public class CodeInterpreter {
 			mm.pushRadix(10);
 		} else if (element.equals("bin")) {
 			mm.pushRadix(2);
+		} else if (element.equals("str")) {
+			mm.pushRadix(0);
 		} else if (element.equals("lr")) {
 			mm.popRadix();
 		} else if (element.equals("pz")) {
 			mm.setPadZeroMode(true);
 		} else if (element.endsWith(":")) {
-			if(!rm.registerAddress(element, cs.getBytes().size())) {
+			if(!rm.registerAddress(element.substring(0, element.length() - 1), cs.getBytes().size() + byteOffset)) {
 				throw new MCCException(element + " label already exist!", sourceFile, lineNum);
 			}
+		} else if (element.matches("loc[1-9][0-9]*:.*")) {
+			cs.addCodeElement(new AddressCodeElement(rm, element, cs.getBytes().size() + byteOffset));
+		} else if (element.matches("rel[1-9][0-9]*:.*")) {
+			cs.addCodeElement(new AddressCodeElement(rm, element, cs.getBytes().size() + byteOffset));
 		} else if (udcm.containsCommand(element)) {
 			List<String> codeList = udcm.getUserDefinedCode(element);
 			for(String code : codeList) {
-				interpret(cs, code, sourceFile, lineNum);
+				interpret(cs, code, byteOffset, sourceFile, lineNum);
 			}
 		} else {
 			try {
+				
 				cs.addCodeElement(new DataCodeElement(element, mm.peekRadix()));
+				
 			} catch(NumberFormatException e) {
 				throw new MCCException("'" + element + "' is not a valid data value for radix " + mm.peekRadix(), sourceFile, lineNum);
 			}

@@ -1,5 +1,6 @@
 package com.mcode.mamoi.mcc.code;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.mcode.mamoi.mcc.ByteFactory;
@@ -7,8 +8,17 @@ import com.mcode.mamoi.mcc.ByteFactory;
 public class DataCodeElement implements CodeElement {
 	List<Integer> bytes = null; 
 	public DataCodeElement(String data, int radix) {
-		long value = Long.parseLong(data, radix);
-		bytes = ByteFactory.asBytes(value);
+		if(radix == 0) { // str mode
+			bytes = new ArrayList<Integer>();
+			byte[] dataBytes = data.getBytes();
+			for(int i = 0; i < dataBytes.length; i++) {
+				bytes.add((int)dataBytes[i]);
+			}
+			
+		} else {
+			long value = Long.parseLong(data, radix);
+			bytes = ByteFactory.asBytes(value);
+		}
 	}
 	
 	// return value in a little endian address bytes
@@ -30,7 +40,6 @@ public class DataCodeElement implements CodeElement {
 		
 		return b;
 	}
-	
 	
 	public List<Integer> getBytes() {
 		return bytes;
