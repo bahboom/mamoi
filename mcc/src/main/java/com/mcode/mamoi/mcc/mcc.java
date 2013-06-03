@@ -2,11 +2,6 @@ package com.mcode.mamoi.mcc;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import com.mcode.mamoi.mcc.code.CodeSegment;
 import com.mcode.mamoi.mcc.interpreter.CodeInterpreter;
