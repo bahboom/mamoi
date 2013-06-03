@@ -36,8 +36,8 @@ public class CodeInterpreter {
 		mccKeywords.add("hex");
 		mccKeywords.add("bin");
 		mccKeywords.add("dec");
+		mccKeywords.add("str");
 		mccKeywords.add("lr");
-		
 	}
 	
 	public CodeSegment translate(File mccFile, int byteOffset) throws MCCException, IOException {
@@ -138,9 +138,7 @@ public class CodeInterpreter {
 			if(!rm.registerAddress(element.substring(0, element.length() - 1), cs.getBytes().size() + byteOffset)) {
 				throw new MCCException(element + " label already exist!", sourceFile, lineNum);
 			}
-		} else if (element.matches("loc[1-9][0-9]*:.*")) {
-			cs.addCodeElement(new AddressCodeElement(rm, element, cs.getBytes().size() + byteOffset));
-		} else if (element.matches("rel[1-9][0-9]*:.*")) {
+		} else if (element.matches("loc[1-9][0-9]*:.*") || element.matches("rel[1-9][0-9]*:.*")) {
 			cs.addCodeElement(new AddressCodeElement(rm, element, cs.getBytes().size() + byteOffset));
 		} else if (udcm.containsCommand(element)) {
 			List<String> codeList = udcm.getUserDefinedCode(element);
