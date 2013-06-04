@@ -17,7 +17,7 @@ public class AddressCodeElement implements CodeElement {
 	public List<Integer> getBytes() {
 		String labelName = referenceLabel.substring(referenceLabel.indexOf(":") + 1);
 		boolean relative = referenceLabel.startsWith("rel");
-		int numBytes = Integer.parseInt(referenceLabel.substring(3, referenceLabel.indexOf(":")));
+		int numBytes = Integer.parseInt(referenceLabel.substring(3, referenceLabel.indexOf(":"))) / 8;
 		int address = rm.getAddress(labelName);
 		if(relative) {
 			address = (address - currentByteLocation) - numBytes; 
