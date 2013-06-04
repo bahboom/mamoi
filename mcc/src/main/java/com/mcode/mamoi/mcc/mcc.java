@@ -33,7 +33,7 @@ public class mcc {
     	for(int b : cs.getBytes()) {
     		fos.write(b);
     		bytesWritten++;
-    		System.out.print("[" + b + "]");
+    		System.out.print("[" + String.format("%02X", b) + "]");
     	}
     	System.out.println("\nBytes Written: " + bytesWritten);
     	fos.close();
