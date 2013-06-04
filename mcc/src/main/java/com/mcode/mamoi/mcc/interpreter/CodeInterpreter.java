@@ -62,6 +62,15 @@ public class CodeInterpreter {
 			lineNum++;
 		}
 		br.close();
+		if(mm.isDefineMode()) {
+			throw new MCCException("Missing edef!", mccFile.getAbsolutePath(), lineNum-1);
+		}
+		if(mm.isIncludeMode()) {
+			throw new MCCException("Missing include source file!", mccFile.getAbsolutePath(), lineNum-1);
+		}
+		if(mm.isPadZeroMode()) {
+			throw new MCCException("Missing pz parameter!", mccFile.getAbsolutePath(), lineNum-1);
+		}
 		return cs;
 	}
 	
@@ -105,19 +114,6 @@ public class CodeInterpreter {
 			return;
 		}
 		
-		if(mm.isPadZeroMode()) {
-			mm.setPadZeroMode(false);
-			int currentBytes = cs.getBytes().size() + byteOffset;
-			int pzParam = Integer.parseInt(element, mm.peekRadix());
-			int zerosNeeded = pzParam - currentBytes;
-			if(zerosNeeded < 0) {
-				throw new MCCException("Cannot pad zero, byte pointer already passed! Current bytes: " + currentBytes + ", Pad location: " + pzParam, sourceFile, lineNum);
-			}
-			
-			cs.addCodeElement(new PadZeroCodeElement(zerosNeeded));
-			return;
-		}
-		
 		if(element.equals("def")) {
 			mm.setDefineMode(true);
 		} else if(element.equals("include")){
@@ -147,8 +143,19 @@ public class CodeInterpreter {
 			}
 		} else {
 			try {
-				
-				cs.addCodeElement(new DataCodeElement(element, mm.peekRadix()));
+				if(mm.isPadZeroMode()) {
+					mm.setPadZeroMode(false);
+					int currentBytes = cs.getBytes().size() + byteOffset;
+					int pzParam = Integer.parseInt(element, mm.peekRadix());
+					int zerosNeeded = pzParam - currentBytes;
+					if(zerosNeeded < 0) {
+						throw new MCCException("Cannot pad zero, byte pointer already passed! Current bytes: " + currentBytes + ", Pad location: " + pzParam, sourceFile, lineNum);
+					}
+					
+					cs.addCodeElement(new PadZeroCodeElement(zerosNeeded));
+				} else {
+					cs.addCodeElement(new DataCodeElement(element, mm.peekRadix()));
+				}
 				
 			} catch(NumberFormatException e) {
 				throw new MCCException("'" + element + "' is not a valid data value for radix " + mm.peekRadix(), sourceFile, lineNum);
