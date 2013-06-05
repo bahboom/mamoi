@@ -20,8 +20,12 @@ public class AddressCodeElement implements CodeElement {
 		int numBytes = Integer.parseInt(referenceLabel.substring(3, referenceLabel.indexOf(":"))) / 8;
 		int address = rm.getAddress(labelName);
 		if(relative) {
-			address = (address - currentByteLocation) - numBytes; 
+			address = (address - (currentByteLocation+numBytes)) ;
+			//if(address < 0) {
+			//	address ++;
+			//}
 		}
+		
 		return ByteFactory.asBytes(address, numBytes);
 	}
 

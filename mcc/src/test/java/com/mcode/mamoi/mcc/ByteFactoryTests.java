@@ -18,7 +18,7 @@ public class ByteFactoryTests {
 		
 		value = -1;
 		bytes = ByteFactory.asBytes(value);
-		assertEquals(0xFE, (int)bytes.get(0));
+		assertEquals(0xFF, (int)bytes.get(0));
 	}
 
 }
