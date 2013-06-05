@@ -5,9 +5,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.mcode.mamoi.mcc.code.AddressCodeElement;
 import com.mcode.mamoi.mcc.code.CodeSegment;
@@ -50,9 +53,14 @@ public class CodeInterpreter {
 		while ( line != null ) {
 			line = line.replaceAll(";.*", ""); // remove comments from code
 			if(!line.trim().isEmpty()) {
-				String[] elements = line.split( " " );
-				for(int i = 0; i < elements.length; i++) {
-					String element = elements[i];
+				
+				List<String> list = new ArrayList<String>();
+				Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(line);
+				while (m.find()) {
+				    list.add(m.group(1).replace("\"", "")); // Add .replace("\"", "") to remove surrounding quotes
+				}
+				
+				for(String element : list) {
 					if(!element.trim().isEmpty()) {
 						interpret(cs, element, byteOffset, mccFile.getAbsolutePath(), lineNum);
 					}
