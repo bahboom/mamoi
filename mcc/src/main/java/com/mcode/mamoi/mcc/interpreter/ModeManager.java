@@ -6,7 +6,6 @@ public class ModeManager {
 	private Stack<Integer> radixStack = null;
 	private String definitionName = null; // the command that it is defining in defineMode
 	private boolean defineMode = false;
-	private boolean quoteMode = false;
 	private boolean includeMode = false;
 	private boolean padZeroMode = false;
 	
@@ -48,12 +47,5 @@ public class ModeManager {
 	public String getDefinitionName() {
 		return definitionName;
 	}
-	
-	public boolean isQuoteMode() {
-		return quoteMode;
-	}
-	
-	public void setQuoteMode(boolean quoting) {
-		quoteMode = quoting;
-	}
+
 }

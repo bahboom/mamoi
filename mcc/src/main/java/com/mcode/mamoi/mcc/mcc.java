@@ -34,6 +34,9 @@ public class mcc {
     		fos.write(b);
     		bytesWritten++;
     		System.out.print("[" + String.format("%02X", b) + "]");
+    		if(bytesWritten % 16 == 0) {
+    			System.out.println();
+    		}
     	}
     	System.out.println("\nBytes Written: " + bytesWritten);
     	fos.close();
